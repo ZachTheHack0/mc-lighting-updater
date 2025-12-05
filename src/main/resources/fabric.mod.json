@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "lighting-updater",
+  "version": "1.0.0",
+  "name": "Lighting Updater",
+  "authors": [
+    "Mine The Line"
+  ],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "net.mine_the_line.lighting_updater.LightingUpdaterModClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.1",
+    "minecraft": "~1.21.10",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

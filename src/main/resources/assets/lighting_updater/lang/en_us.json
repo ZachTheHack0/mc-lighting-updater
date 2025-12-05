@@ -1,0 +1,13 @@
+{
+  "lightingupdater.config.reload": "§aLighting config reloaded",
+  "lightingupdater.config.save": "§aLighting config saved",
+
+  "lightingupdater.config.key.unknown": "§cUnknown config key.",
+  "lightingupdater.config.key.update.radius": "§aUpdated '§rradius§a' to §a%s§a.",
+  "lightingupdater.config.key.update.update_interval": "§aUpdated '§rupdate interval§a' to §a%s§a.",
+  "lightingupdater.config.key.update.reupdate_interval": "§aUpdated '§rreupdate interval§a' to §a%s§a.",
+
+  "lightingupdater.config.key.get.radius": "Value of 'radius' is %s.",
+  "lightingupdater.config.key.get.update_interval": "Value of 'update interval' is %s.",
+  "lightingupdater.config.key.get.reupdate_interval": "Value of 'reupdate interval' is %s."
+}
