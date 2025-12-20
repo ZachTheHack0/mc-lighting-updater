@@ -10,7 +10,7 @@
   "environment": "client",
   "entrypoints": {
     "client": [
-      "net.mcreator.lightingupdater.LightingUpdaterModClient"
+      "net.mine_the_line.lighting_updater.LightingUpdaterModClient"
     ]
   },
   "depends": {

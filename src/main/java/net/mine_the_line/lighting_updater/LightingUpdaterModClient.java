@@ -1,31 +1,26 @@
-package net.mcreator.lightingupdater;
+package net.mine_the_line.lighting_updater;
 
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
-import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.api.*;
 import net.fabricmc.fabric.api.client.command.v2.*;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.mcreator.lightingupdater.config.ConfigManager;
+import net.mine_the_line.lighting_updater.config.ConfigManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
-import static net.mcreator.lightingupdater.config.ConfigManager.config;
-import static net.minecraft.network.chat.Component.translatable;
+import static net.mine_the_line.lighting_updater.config.ConfigManager.config;
 
 @Environment(EnvType.CLIENT)
 public class LightingUpdaterModClient implements ClientModInitializer {
 	private int tick = 0;
-	private final LinkedHashSet<BlockPos> alreadyTickedBlocks = new LinkedHashSet<>();
-
-	private int printChat(CommandContext<? extends FabricClientCommandSource> ctx, Component msg) {
-		ctx.getSource().sendFeedback(msg);
-		return 1;
-	}
+	private final Set<BlockPos> alreadyTickedBlocks = new LinkedHashSet<>();
 
 	@Override
 	public void onInitializeClient() {
@@ -37,13 +32,15 @@ public class LightingUpdaterModClient implements ClientModInitializer {
 				.then(ClientCommandManager.literal("reload")
 					.executes(ctx -> {
 						ConfigManager.load();
-						return printChat(ctx, translatable("lightingupdater.config.reload"));
+						ctx.getSource().sendFeedback(Component.translatable("lightingupdater.config.reload"));
+						return 1;
 					})
 				)
 				.then(ClientCommandManager.literal("save")
 					.executes(ctx -> {
 						ConfigManager.save();
-						return printChat(ctx, translatable("lightingupdater.config.save"));
+						ctx.getSource().sendFeedback(Component.translatable("lightingupdater.config.save"));
+						return 1;
 					})
 				)
 				.then(ClientCommandManager.literal("set")
@@ -53,7 +50,8 @@ public class LightingUpdaterModClient implements ClientModInitializer {
 								int value = IntegerArgumentType.getInteger(ctx, "value");
 								config.radius = value;
 								ConfigManager.save();
-								return printChat(ctx, translatable("lightingupdater.config.key.update.radius", value));
+								ctx.getSource().sendFeedback(Component.translatable("lightingupdater.config.key.update.radius", value));
+								return 1;
 							})
 						)
 					)
@@ -63,7 +61,8 @@ public class LightingUpdaterModClient implements ClientModInitializer {
 								int value = IntegerArgumentType.getInteger(ctx, "value");
 								config.update_interval = value;
 								ConfigManager.save();
-								return printChat(ctx, translatable("lightingupdater.config.key.update.update_interval", value));
+								ctx.getSource().sendFeedback(Component.translatable("lightingupdater.config.key.update.update_interval", value));
+								return 1;
 							})
 						)
 					)
@@ -73,24 +72,51 @@ public class LightingUpdaterModClient implements ClientModInitializer {
 								int value = IntegerArgumentType.getInteger(ctx, "value");
 								config.reupdate_interval = value;
 								ConfigManager.save();
-								return printChat(ctx, translatable("lightingupdater.config.key.update.reupdate_interval", value));
+								ctx.getSource().sendFeedback(Component.translatable("lightingupdater.config.key.update.reupdate_interval", value));
+								return 1;
+							})
+						)
+					)
+					.then(ClientCommandManager.literal("tick_adjacent_blocks")
+						.then(ClientCommandManager.argument("value", BoolArgumentType.bool())
+							.executes(ctx -> {
+								boolean value = BoolArgumentType.getBool(ctx, "value");
+								config.tick_adjacent_blocks = value;
+								ConfigManager.save();
+								ctx.getSource().sendFeedback(Component.translatable("lightingupdater.config.key.update.tick_adjacent_blocks", value));
+								return 1;
 							})
 						)
 					)
 				)
 				.then(ClientCommandManager.literal("get")
 					.then(ClientCommandManager.literal("radius")
-						.executes(ctx -> printChat(ctx, translatable("lightingupdater.config.key.get.radius", config.radius)))
+						.executes(ctx -> {
+							ctx.getSource().sendFeedback(Component.translatable("lightingupdater.config.key.get.radius", config.radius));
+							return 1;
+                        })
 					)
 					.then(ClientCommandManager.literal("update_interval")
-						.executes(ctx -> printChat(ctx, translatable("lightingupdater.config.key.get.update_interval", config.update_interval)))
+						.executes(ctx -> {
+							ctx.getSource().sendFeedback(Component.translatable("lightingupdater.config.key.get.update_interval", config.update_interval));
+							return 1;
+                        })
 					)
 					.then(ClientCommandManager.literal("reupdate_interval")
-						.executes(ctx -> printChat(ctx, translatable("lightingupdater.config.key.get.reupdate_interval", config.reupdate_interval)))
+						.executes(ctx -> {
+							ctx.getSource().sendFeedback(Component.translatable("lightingupdater.config.key.get.reupdate_interval", config.reupdate_interval));
+							return 1;
+                        })
+					)
+					.then(ClientCommandManager.literal("tick_adjacent_blocks")
+						.executes(ctx -> {
+							ctx.getSource().sendFeedback(Component.translatable("lightingupdater.config.key.get.tick_adjacent_blocks", config.tick_adjacent_blocks));
+							return 1;
+                        })
 					)
 				)
 			)
-        	);
+		);
 	}
 	private void tickBlock(@NotNull Minecraft client, BlockPos pos) {
 		// skip already ticked blocks for performance
@@ -100,13 +126,15 @@ public class LightingUpdaterModClient implements ClientModInitializer {
 		// force a recheck for this block
 		client.level.getLightEngine().checkBlock(pos);
 
-		// also check adjacent blocks to refresh propagation
-		for (Direction dir : Direction.values()) {
-			BlockPos relPos = pos.relative(dir);
-			if (alreadyTickedBlocks.contains(relPos)) continue;
-			client.level.getLightEngine().checkBlock(relPos);
-			alreadyTickedBlocks.add(relPos);
-		}
+		// also check adjacent blocks if configured that way to update them
+		if (config.tick_adjacent_blocks)
+			for (Direction dir : Direction.values()) {
+				BlockPos relPos = pos.relative(dir);
+				if (alreadyTickedBlocks.contains(relPos))
+					continue;
+				client.level.getLightEngine().checkBlock(relPos);
+				alreadyTickedBlocks.add(relPos);
+			}
 	}
 	protected void onClientTick(@NotNull Minecraft client) {
 		tick++;

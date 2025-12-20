@@ -1,4 +1,4 @@
-package net.mcreator.lightingupdater.config;
+package net.mine_the_line.lighting_updater.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
