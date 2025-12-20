@@ -2,8 +2,7 @@ package net.mine_the_line.lighting_updater;
 
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 import net.fabricmc.api.*;
 import net.fabricmc.fabric.api.client.command.v2.*;
